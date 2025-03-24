@@ -1,5 +1,6 @@
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
+local LocalPlayer = Players.LocalPlayer
 
 if game:GetService("CoreGui"):FindFirstChild("LunarUI") then
     game:GetService("CoreGui"):FindFirstChild("LunarUI"):Destroy()
@@ -22,7 +23,7 @@ MainFrame.Parent = LunarUI
 MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 MainFrame.BackgroundTransparency = 0.3
 MainFrame.Position = UDim2.new(1, -210, 0, -50)
-MainFrame.Size = UDim2.new(0, 200, 0, 120)
+MainFrame.Size = UDim2.new(0, 200, 0, 150)
 MainFrame.AnchorPoint = Vector2.new(0, 0)
 
 TopBar.Name = "TopBar"
@@ -78,6 +79,27 @@ CPSLabel.Font = Enum.Font.Gotham
 CPSLabel.TextSize = 14
 CPSLabel.TextXAlignment = Enum.TextXAlignment.Left
 
+local ProfilePicture = Instance.new("ImageLabel")
+ProfilePicture.Name = "ProfilePicture"
+ProfilePicture.Parent = StatsFrame
+ProfilePicture.BackgroundTransparency = 1
+ProfilePicture.Position = UDim2.new(0, 10, 0, 85)
+ProfilePicture.Size = UDim2.new(0, 30, 0, 30)
+ProfilePicture.Image = Players:GetUserThumbnailAsync(LocalPlayer.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size48x48)
+ProfilePicture.ScaleType = Enum.ScaleType.Fit
+
+local UsernameLabel = Instance.new("TextLabel")
+UsernameLabel.Name = "UsernameLabel"
+UsernameLabel.Parent = StatsFrame
+UsernameLabel.BackgroundTransparency = 1
+UsernameLabel.Position = UDim2.new(0, 50, 0, 90)
+UsernameLabel.Size = UDim2.new(1, -60, 0, 20)
+UsernameLabel.Text = LocalPlayer.Name
+UsernameLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+UsernameLabel.Font = Enum.Font.Gotham
+UsernameLabel.TextSize = 14
+UsernameLabel.TextXAlignment = Enum.TextXAlignment.Left
+
 local fps = 0
 local heartbeat = game:GetService("RunService").Heartbeat
 local fpsCount = 0
@@ -99,23 +121,32 @@ spawn(function()
     end
 end)
 
-local clicks = 0
-local lastClickTime = tick()
+local clickTimes = {}
 
 game:GetService("UserInputService").InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        clicks = clicks + 1
-        lastClickTime = tick()
-        CPSLabel.Text = "CPS: " .. tostring(clicks)
+        local currentTime = tick()
+        table.insert(clickTimes, currentTime)
+        
+        local oneSecondAgo = currentTime - 1
+        while clickTimes[1] and clickTimes[1] < oneSecondAgo do
+            table.remove(clickTimes, 1)
+        end
+        
+        CPSLabel.Text = "CPS: " .. #clickTimes
     end
 end)
 
 spawn(function()
     while wait(0.1) do
-        if tick() - lastClickTime >= 1 then
-            clicks = 0
-            CPSLabel.Text = "CPS: 0"
+        local currentTime = tick()
+        local oneSecondAgo = currentTime - 1
+        
+        while clickTimes[1] and clickTimes[1] < oneSecondAgo do
+            table.remove(clickTimes, 1)
         end
+        
+        CPSLabel.Text = "CPS: " .. #clickTimes
     end
 end)
 
